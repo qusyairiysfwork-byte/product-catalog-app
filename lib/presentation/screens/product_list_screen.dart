@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../data/models/product.dart';
 import '../../data/services/product_service.dart';
 
+import '../widgets/product_card.dart';
 import 'product_detail_screen.dart';
 
 class ProductListScreen extends StatefulWidget {
@@ -257,73 +258,18 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
         final product = _products[index];
 
-        return Card(
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ProductDetailScreen(
-                    productId: product.id,
-                  ),
+        return ProductCard(
+          product: product,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProductDetailScreen(
+                  productId: product.id,
                 ),
-              );
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Image.network(
-                    product.thumbnail,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(height: 6),
-
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.star,
-                            size: 16,
-                            color: Colors.amber,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(product.rating.toString()),
-                        ],
-                      ),
-
-                      const SizedBox(height: 6),
-
-                      Text(
-                        '\$${product.price.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
