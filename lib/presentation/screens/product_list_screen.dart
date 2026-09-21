@@ -228,26 +228,27 @@ class _ProductListScreenState extends State<ProductListScreen> {
       );
     }
 
-    return ListView.builder(
+    return GridView.builder(
       controller: _scrollController,
+      padding: const EdgeInsets.all(12),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.72,
+      ),
       itemCount: _products.length + 1,
       itemBuilder: (context, index) {
         if (index == _products.length) {
           if (_isLoadingMore) {
-            return const Padding(
-              padding: EdgeInsets.all(16),
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
+            return const Center(
+              child: CircularProgressIndicator(),
             );
           }
 
           if (_products.length >= _total) {
-            return const Padding(
-              padding: EdgeInsets.all(16),
-              child: Center(
-                child: Text('No more products'),
-              ),
+            return const Center(
+              child: Text('No more products'),
             );
           }
 
@@ -256,27 +257,73 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
         final product = _products[index];
 
-        return ListTile(
-          leading: Image.network(
-            product.thumbnail,
-            width: 60,
-            height: 60,
-            fit: BoxFit.cover,
-          ),
-          title: Text(product.title),
-          subtitle: Text(
-            '\$${product.price.toStringAsFixed(2)}',
-          ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ProductDetailScreen(
-                  productId: product.id,
+        return Card(
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProductDetailScreen(
+                    productId: product.id,
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Image.network(
+                    product.thumbnail,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.star,
+                            size: 16,
+                            color: Colors.amber,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(product.rating.toString()),
+                        ],
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      Text(
+                        '\$${product.price.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
