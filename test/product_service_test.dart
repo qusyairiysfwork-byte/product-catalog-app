@@ -1,6 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:product_catalog_app/data/models/product.dart';
 import 'package:product_catalog_app/data/models/product_response.dart';
 
 void main() {
