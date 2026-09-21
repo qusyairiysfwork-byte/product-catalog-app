@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../data/models/product.dart';
 import '../../data/services/product_service.dart';
 
+import 'product_detail_screen.dart';
+
 class ProductListScreen extends StatefulWidget {
   const ProductListScreen({super.key});
 
@@ -182,6 +184,16 @@ class _ProductListScreenState extends State<ProductListScreen> {
           subtitle: Text(
             '\$${product.price.toStringAsFixed(2)}',
           ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProductDetailScreen(
+                  productId: product.id,
+                ),
+              ),
+            );
+          },
         );
       },
     );
