@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../data/models/product.dart';
@@ -15,6 +17,9 @@ class ProductListScreen extends StatefulWidget {
 class _ProductListScreenState extends State<ProductListScreen> {
   final ProductService _productService = ProductService();
   final ScrollController _scrollController = ScrollController();
+
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchTimer;
 
   final List<Product> _products = [];
 
@@ -40,6 +45,21 @@ class _ProductListScreenState extends State<ProductListScreen> {
         _scrollController.position.maxScrollExtent - 200) {
       _loadMoreProducts();
     }
+  }
+
+  void _onSearchChanged(String query) {
+  _searchTimer?.cancel();
+
+  _searchTimer = Timer(
+      const Duration(milliseconds: 500),
+      () {
+        if (query.trim().isEmpty) {
+          _loadProducts();
+        } else {
+          _searchProducts(query.trim());
+        }
+      },
+    );
   }
 
   Future<void> _loadProducts() async {
@@ -72,6 +92,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   Future<void> _loadMoreProducts() async {
+
+    if (_searchController.text.trim().isNotEmpty) {
+      return;
+    }
+    
     if (_isLoadingMore || _products.length >= _total) {
       return;
     }
@@ -100,9 +125,38 @@ class _ProductListScreenState extends State<ProductListScreen> {
     }
   }
 
+  Future<void> _searchProducts(String query) async {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+
+    try {
+      final result = await _productService.searchProducts(query);
+
+      setState(() {
+        _products.clear();
+        _products.addAll(result.products);
+
+        _skip = result.products.length;
+        _total = result.total;
+
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
+    }
+  }
+
   @override
   void dispose() {
+    _searchTimer?.cancel();
+    _searchController.dispose();
     _scrollController.dispose();
+
     super.dispose();
   }
 
@@ -111,6 +165,35 @@ class _ProductListScreenState extends State<ProductListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Products'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              decoration: InputDecoration(
+                hintText: 'Search products',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          _loadProducts();
+                          setState(() {});
+                        },
+                      )
+                    : null,
+                filled: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
       body: _buildBody(),
     );
