@@ -12,16 +12,32 @@ class ProductListScreen extends StatefulWidget {
 
 class _ProductListScreenState extends State<ProductListScreen> {
   final ProductService _productService = ProductService();
+  final ScrollController _scrollController = ScrollController();
 
   final List<Product> _products = [];
 
   bool _isLoading = false;
+  bool _isLoadingMore = false;
   bool _hasError = false;
+
+  int _skip = 0;
+  final int _limit = 20;
+  int _total = 0;
 
   @override
   void initState() {
     super.initState();
+
+    _scrollController.addListener(_onScroll);
+
     _loadProducts();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreProducts();
+    }
   }
 
   Future<void> _loadProducts() async {
@@ -31,11 +47,18 @@ class _ProductListScreenState extends State<ProductListScreen> {
     });
 
     try {
-      final result = await _productService.getProducts();
+      final result = await _productService.getProducts(
+        limit: _limit,
+        skip: 0,
+      );
 
       setState(() {
         _products.clear();
         _products.addAll(result.products);
+
+        _skip = result.skip + result.products.length;
+        _total = result.total;
+
         _isLoading = false;
       });
     } catch (e) {
@@ -44,6 +67,41 @@ class _ProductListScreenState extends State<ProductListScreen> {
         _hasError = true;
       });
     }
+  }
+
+  Future<void> _loadMoreProducts() async {
+    if (_isLoadingMore || _products.length >= _total) {
+      return;
+    }
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    try {
+      final result = await _productService.getProducts(
+        limit: _limit,
+        skip: _skip,
+      );
+
+      setState(() {
+        _products.addAll(result.products);
+
+        _skip = result.skip + result.products.length;
+
+        _isLoadingMore = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingMore = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -86,8 +144,31 @@ class _ProductListScreenState extends State<ProductListScreen> {
     }
 
     return ListView.builder(
-      itemCount: _products.length,
+      controller: _scrollController,
+      itemCount: _products.length + 1,
       itemBuilder: (context, index) {
+        if (index == _products.length) {
+          if (_isLoadingMore) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+
+          if (_products.length >= _total) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: Text('No more products'),
+              ),
+            );
+          }
+
+          return const SizedBox.shrink();
+        }
+
         final product = _products[index];
 
         return ListTile(
@@ -98,7 +179,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
             fit: BoxFit.cover,
           ),
           title: Text(product.title),
-          subtitle: Text('\$${product.price.toStringAsFixed(2)}'),
+          subtitle: Text(
+            '\$${product.price.toStringAsFixed(2)}',
+          ),
         );
       },
     );
